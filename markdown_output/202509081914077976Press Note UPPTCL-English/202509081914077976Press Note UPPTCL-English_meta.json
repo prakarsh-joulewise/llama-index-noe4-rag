@@ -1,0 +1,225 @@
+{
+  "table_of_contents": [
+    {
+      "title": "New Tariff determination Methodology",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          73.91796875,
+          407.09326171875
+        ],
+        [
+          258.64150943396226,
+          407.09326171875
+        ],
+        [
+          258.64150943396226,
+          419.44189453125
+        ],
+        [
+          73.91796875,
+          419.44189453125
+        ]
+      ]
+    },
+    {
+      "title": "Approved Intra State Transmission Tariff",
+      "heading_level": null,
+      "page_id": 1,
+      "polygon": [
+        [
+          53.54687499999999,
+          126.779296875
+        ],
+        [
+          248.1459119496855,
+          126.0
+        ],
+        [
+          248.1459119496855,
+          139.951171875
+        ],
+        [
+          53.54687499999999,
+          141.0
+        ]
+      ]
+    },
+    {
+      "title": "Benefits",
+      "heading_level": null,
+      "page_id": 2,
+      "polygon": [
+        [
+          48.72955974842767,
+          137.89306640625
+        ],
+        [
+          89.21257861635219,
+          137.89306640625
+        ],
+        [
+          89.21257861635219,
+          150.24169921875
+        ],
+        [
+          48.72955974842767,
+          150.24169921875
+        ]
+      ]
+    },
+    {
+      "title": "Directives under Tariff Order",
+      "heading_level": null,
+      "page_id": 2,
+      "polygon": [
+        [
+          52.477987421383645,
+          416.14892578125
+        ],
+        [
+          188.92075471698112,
+          414.50244140625
+        ],
+        [
+          188.92075471698112,
+          427.5
+        ],
+        [
+          52.477987421383645,
+          429.75
+        ]
+      ]
+    }
+  ],
+  "page_stats": [
+    {
+      "page_id": 0,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Line",
+          57
+        ],
+        [
+          "Span",
+          16
+        ],
+        [
+          "ListItem",
+          11
+        ],
+        [
+          "PageHeader",
+          2
+        ],
+        [
+          "ListGroup",
+          2
+        ],
+        [
+          "Text",
+          1
+        ],
+        [
+          "SectionHeader",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 1,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "TableCell",
+          126
+        ],
+        [
+          "Line",
+          23
+        ],
+        [
+          "Span",
+          8
+        ],
+        [
+          "ListItem",
+          5
+        ],
+        [
+          "Text",
+          2
+        ],
+        [
+          "Table",
+          2
+        ],
+        [
+          "ListGroup",
+          2
+        ],
+        [
+          "SectionHeader",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 2,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Line",
+          54
+        ],
+        [
+          "Span",
+          16
+        ],
+        [
+          "ListItem",
+          11
+        ],
+        [
+          "Text",
+          3
+        ],
+        [
+          "ListGroup",
+          3
+        ],
+        [
+          "SectionHeader",
+          2
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    }
+  ],
+  "debug_data_path": "debug_data/202509081914077976Press Note UPPTCL-English"
+}
