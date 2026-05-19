@@ -13,7 +13,8 @@ def convert_all_pdfs():
     os.makedirs(INPUT_DIR, exist_ok=True)
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     
-    pdf_files = glob.glob(os.path.join(INPUT_DIR, "*.pdf"))
+    input_path = Path(INPUT_DIR)
+    pdf_files = list(input_path.rglob("*.pdf"))
     
     if not pdf_files:
         print(f"No PDF files found in {INPUT_DIR}. Please place some legal documents there.")
@@ -22,17 +23,21 @@ def convert_all_pdfs():
     print(f"Found {len(pdf_files)} PDF files. Starting conversion...")
 
     for pdf_path in pdf_files:
-        filename = Path(pdf_path).stem
-        output_folder = os.path.join(OUTPUT_DIR, filename)
+        # Determine the relative folder structure (e.g., UP/2025)
+        rel_dir = pdf_path.parent.relative_to(input_path)
         
-        print(f"Converting {filename}...")
+        # We don't want to create markdown_output/UP/2025/filename. 
+        # Marker creates its own folder for the output, so we just pass markdown_output/UP/2025 as the output_dir.
+        target_out_dir = Path(OUTPUT_DIR) / rel_dir
+        os.makedirs(target_out_dir, exist_ok=True)
+        
+        filename = pdf_path.stem
+        print(f"Converting {filename} from {rel_dir}...")
         
         # Marker CLI command to convert a single PDF
-        # Note: Depending on your exact marker-pdf version, the command might be 'marker_single'
-        # Usage: marker_single /path/to/file.pdf /path/to/output/folder
         try:
             subprocess.run(
-                ["marker_single", pdf_path, "--output_dir", OUTPUT_DIR, "--output_format", "markdown"],
+                ["marker_single", str(pdf_path), "--output_dir", str(target_out_dir), "--output_format", "markdown"],
                 check=True
             )
             print(f"Successfully converted {filename}.")

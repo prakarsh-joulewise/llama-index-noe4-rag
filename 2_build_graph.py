@@ -1,10 +1,17 @@
 import os
+from pathlib import Path
 from llama_index.core import SimpleDirectoryReader, PropertyGraphIndex
 from llama_index.core.indices.property_graph import SimpleLLMPathExtractor
 from llama_index.graph_stores.neo4j import Neo4jPropertyGraphStore
 from llama_index.core.node_parser import MarkdownNodeParser
 from config import setup_global_settings
 import traceback
+import logging
+import sys
+
+# Enable LlamaIndex debug logging so you can see every prompt sent to Ollama and the responses!
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+logging.getLogger().addHandler(logging.StreamHandler(stream=sys.stdout))
 
 def build_knowledge_graph():
     """Reads Markdown documents and builds a Property Graph in Neo4j."""
@@ -17,8 +24,27 @@ def build_knowledge_graph():
         return
 
     print("Loading documents...")
-    # Load all markdown files recursively
-    documents = SimpleDirectoryReader(input_dir, recursive=True, required_exts=[".md"]).load_data()
+    def extract_metadata_from_path(filepath):
+        # Assumes structure: markdown_output/<State>/<Year>/<filename>/...
+        parts = Path(filepath).parts
+        # We need to find 'markdown_output' in the path to safely extract state and year
+        try:
+            base_idx = parts.index("markdown_output")
+            # If structure is correctly followed: parts[base_idx+1] is State, parts[base_idx+2] is Year
+            state = parts[base_idx + 1] if len(parts) > base_idx + 1 else "Unknown"
+            year = parts[base_idx + 2] if len(parts) > base_idx + 2 else "Unknown"
+        except ValueError:
+            state, year = "Unknown", "Unknown"
+        
+        return {"state": state, "year": year}
+
+    # Load all markdown files recursively and inject metadata
+    documents = SimpleDirectoryReader(
+        input_dir, 
+        recursive=True, 
+        required_exts=[".md"],
+        file_metadata=extract_metadata_from_path
+    ).load_data()
     print(f"Loaded {len(documents)} documents.")
 
     print("Connecting to Neo4j...")
