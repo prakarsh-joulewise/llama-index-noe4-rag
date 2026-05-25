@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Joulewise RAG - Chat Agent</title>
+    <!-- Google Fonts: Outfit and Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Main Style Sheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="brand">
+                    <span class="brand-icon"><i class="fa-solid fa-bolt-lightning"></i></span>
+                    <span class="brand-name">Joulewise<span>RAG</span></span>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3><i class="fa-solid fa-signal"></i> System Status</h3>
+                <div class="status-card">
+                    <div class="status-item" id="status-api">
+                        <span class="status-indicator offline"></span>
+                        <span class="status-label">Backend API: Connecting...</span>
+                    </div>
+                    <div class="status-item" id="status-neo4j">
+                        <span class="status-indicator offline"></span>
+                        <span class="status-label">Neo4j Database: Offline</span>
+                    </div>
+                    <div class="model-badge">
+                        <i class="fa-solid fa-microchip"></i> <span id="active-model">gemma4:e4b</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-section scrollable">
+                <h3><i class="fa-solid fa-folder-open"></i> Quick Queries</h3>
+                <div class="suggestions-list">
+                    <button class="suggest-btn" data-query="tell me what are the proposed and approved wheeling charges applicable in UP">
+                        <i class="fa-solid fa-circle-question"></i> UP Wheeling Charges
+                    </button>
+                    <button class="suggest-btn" data-query="What are transmission charges for open access consumers in Uttar Pradesh?">
+                        <i class="fa-solid fa-circle-question"></i> UP Transmission Charges
+                    </button>
+                    <button class="suggest-btn" data-query="What is the average market purchase rate of APEPDCL?">
+                        <i class="fa-solid fa-circle-question"></i> APEPDCL Purchase Rate
+                    </button>
+                    <button class="suggest-btn" data-query="What is the total Fixed Cost proposed by APSPDCL in O.P. No. 13 of 2026?">
+                        <i class="fa-solid fa-circle-question"></i> APSPDCL Fixed Cost
+                    </button>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <button class="clear-btn" id="btn-clear-chat">
+                    <i class="fa-solid fa-trash-can"></i> Clear Conversation
+                </button>
+                <div class="footer-note">
+                    <p>Powered by Neo4j & LlamaIndex</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="chat-area">
+            <header class="chat-header">
+                <div class="chat-title-info">
+                    <h2>Regulatory RAG Agent</h2>
+                    <p>Ask natural questions about tariff orders, wheeling, and transmission charges</p>
+                </div>
+            </header>
+
+            <!-- Chat Message Feed -->
+            <div class="chat-feed" id="chat-messages">
+                <!-- Welcome Card -->
+                <div class="welcome-card" id="welcome-message">
+                    <div class="welcome-icon">
+                        <i class="fa-solid fa-comments-dollar"></i>
+                    </div>
+                    <h2>Welcome to Joulewise RAG!</h2>
+                    <p>I am your smart regulatory assistant, connected to your Neo4j Knowledge Graph. Ask me anything about electricity tariffs, wheeling rates, and transmission charges.</p>
+                    <div class="suggestion-grid">
+                        <div class="suggestion-card" data-query="tell me what are the proposed and approved wheeling charges applicable in UP">
+                            <h4>UP Wheeling Charges</h4>
+                            <p>Get proposed (1.03) vs approved (0.9985) rates with voltage details.</p>
+                        </div>
+                        <div class="suggestion-card" data-query="What are transmission charges for open access consumers in Uttar Pradesh?">
+                            <h4>UP Transmission Charges</h4>
+                            <p>Retrieve the approved 0.2674/kWh rate and its capping context.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Source Document Preview Drawer -->
+            <div class="sources-drawer" id="sources-container" style="display: none;">
+                <div class="drawer-header">
+                    <h4><i class="fa-solid fa-book-open"></i> Retrieved Source Contexts (<span id="source-count">0</span>)</h4>
+                    <button class="toggle-drawer-btn" id="btn-toggle-sources">
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                </div>
+                <div class="sources-list" id="sources-list">
+                    <!-- Source items dynamically rendered -->
+                </div>
+            </div>
+
+            <!-- Input Form Block -->
+            <footer class="chat-footer">
+                <form id="chat-form" class="input-container">
+                    <textarea 
+                        id="user-input" 
+                        placeholder="Ask a question... (e.g., proposed and approved wheeling charges in UP)" 
+                        rows="1" 
+                        required
+                    ></textarea>
+                    <button type="submit" id="btn-send" class="send-btn">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </form>
+            </footer>
+        </main>
+    </div>
+
+    <!-- Marked.js Markdown Parser via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Application Logic -->
+    <script src="app.js"></script>
+</body>
+</html>

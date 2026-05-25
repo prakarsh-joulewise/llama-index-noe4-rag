@@ -3,3 +3,5 @@ data/
 __pycache__/
 *.pyc
 .env
+markdown_output/
+input_docs/

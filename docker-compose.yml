@@ -1,16 +1,25 @@
-version: '3'
+version: '3.8'
+
 services:
-  neo4j:
-    image: neo4j:latest
-    container_name: neo4j
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: joulewise-rag-backend
     ports:
-      - "7474:7474"
-      - "7687:7687"
+      - "5005:5005"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
-      - NEO4J_AUTH=neo4j/password
-      - NEO4J_PLUGINS=["apoc"]
-      - NEO4J_apoc_export_file_enabled=true
-      - NEO4J_apoc_import_file_enabled=true
-      - NEO4J_apoc_import_file_use__neo4j__config=true
-    volumes:
-      - ./data:/data
+      # You can override .env variables here if needed
+      - NEO4J_URI=${NEO4J_URI:-bolt://host.docker.internal:7687}
+    restart: always
+
+  ui:
+    build:
+      context: ./ui
+      dockerfile: Dockerfile
+    container_name: joulewise-rag-ui
+    ports:
+      - "3006:80"
+    restart: always

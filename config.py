@@ -13,6 +13,7 @@ def get_llm():
         model=os.getenv("LLM_MODEL_NAME", "gemma4:e4b"),
         api_key=os.getenv("LLM_API_KEY", "ollama"),
         api_base=os.getenv("LLM_API_BASE", "http://122.186.70.126:11434/v1"),
+        context_window=32768,
         is_chat_model=True
     )
     return llm

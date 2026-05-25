@@ -1,0 +1,1 @@
+python -c "from config import get_neo4j_driver; driver = get_neo4j_driver(); session = driver.session(); session.run('MATCH (n) DETACH DELETE n'); session.run('DROP INDEX chunk_vector_index IF EXISTS'); session.run('DROP INDEX chunk_text_index IF EXISTS'); print('Database cleared successfully!'); driver.close()"
