@@ -19,6 +19,21 @@ def convert_all_pdfs():
         print(f"No PDF files found in {INPUT_DIR}. Please place some PDF documents there.")
         return
 
+    # Check if magic-pdf.json exists in user's home directory
+    config_path = Path.home() / "magic-pdf.json"
+    if not config_path.exists():
+        print("="*80)
+        print(f"Error: MinerU configuration file not found at: {config_path}")
+        print("MinerU requires downloading model weights and initializing this file before running.")
+        print("\nPlease run the following commands on your server to download models and set it up:")
+        print("  1. Download the helper script:")
+        print("     wget https://github.com/opendatalab/MinerU/raw/master/scripts/download_models_hf.py")
+        print("  2. Run the download script (this will fetch weights and auto-generate magic-pdf.json):")
+        print("     python download_models_hf.py")
+        print("  3. Verify the 'models-dir' path in ~/magic-pdf.json points to the downloaded weights.")
+        print("="*80)
+        return
+
     print(f"Found {len(pdf_files)} PDF files. Starting MinerU conversion...")
 
     # Determine command to use: magic-pdf or mineru
