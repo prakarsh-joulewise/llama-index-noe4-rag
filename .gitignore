@@ -4,4 +4,6 @@ __pycache__/
 *.pyc
 .env
 markdown_output/
+markdown_output_mineru/
 input_docs/
+

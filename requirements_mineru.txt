@@ -1,0 +1,11 @@
+# Extra indexes for CUDA PyTorch and MinerU pre-compiled wheels
+--extra-index-url https://download.pytorch.org/whl/cu124
+--extra-index-url https://wheels.myhloli.com
+
+# PyTorch dependencies (CUDA 12.4 compatible)
+torch>=2.2.0
+torchvision
+torchaudio
+
+# MinerU with layout detection models and full parser features
+magic-pdf[full]
