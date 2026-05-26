@@ -159,11 +159,14 @@ def rewrite_query(message: str, history: list) -> str:
         history_str += f"{role}: {content_clean}\n"
         
     rewrite_prompt = (
-        "You are a helpful assistant that reformulates user follow-up questions.\n"
-        "Given the conversation history and a new follow-up question, rewrite it into a single, standalone search query that contains all necessary context (like states, specific terms, or years) to search a database.\n\n"
+        "You are an AI assistant that reformulates user follow-up questions for a search engine.\n\n"
+        "Your task is to rewrite the follow-up question into a standalone search query ONLY if it contains ambiguous pronouns or conversational shortcuts (like 'it', 'ones', 'what about...', 'these', 'those').\n\n"
         "Rules:\n"
-        "1. Do NOT include specific section numbers, section paths (e.g. 'Section 5.2'), document names, or page numbers in the rewritten query, as this will over-restrict search results. Keep it focused on the core topic (e.g. 'transmission charges', 'wheeling charges'), state, and year.\n"
-        "2. Do NOT answer the question. Only output the rewritten question.\n\n"
+        "1. Do NOT add any specific section numbers, section paths, document names, or page numbers in the rewritten query, as this will over-restrict search results.\n"
+        "2. Do NOT add any years, fiscal years (e.g., 'FY 2025-26'), or dates to the rewritten query unless the user's follow-up question explicitly mentions a year/date. Keep the query general so it can match chunks from any year.\n"
+        "3. Carry over the state name (e.g. 'UP' or 'Uttar Pradesh') if the conversation history was focusing on that state and the follow-up query implies it.\n"
+        "4. If the user's follow-up question is already standalone and does not contain conversational shortcuts (e.g., 'What are the transmission charges in UP?'), output it exactly as it is without modifying a single word.\n"
+        "5. Do NOT answer the question. Only output the rewritten query.\n\n"
         f"Conversation History:\n{history_str}\n"
         f"Follow-up Question: {message}\n"
         "Standalone Search Query: "
