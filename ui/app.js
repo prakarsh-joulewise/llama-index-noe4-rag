@@ -88,6 +88,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Handle form submit
+    if (chatForm) {
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const message = userInput.value.trim();
+            if (!message) return;
+            
+            sendQuery(message);
+            userInput.value = '';
+            userInput.style.height = 'auto'; // Reset height
+        });
+    }
+
     // Mobile Sidebar helper functions
     const closeSidebar = () => {
         console.log('[Sidebar] Closing sidebar...');
@@ -219,15 +232,6 @@ function connectWebSocket() {
 // -------------------------------------------------------------
 // Chat Operations
 // -------------------------------------------------------------
-chatForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const message = userInput.value.trim();
-    if (!message) return;
-    
-    sendQuery(message);
-    userInput.value = '';
-    userInput.style.height = 'auto'; // Reset height
-});
 
 function sendQuery(message) {
     if (ws.readyState !== WebSocket.OPEN) {
