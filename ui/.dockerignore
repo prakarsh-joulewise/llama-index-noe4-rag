@@ -1,2 +1,1 @@
-nginx.conf
-Dockerfile
+# Empty dockerignore to ensure all necessary files are sent to the docker context
