@@ -20,29 +20,14 @@ let currentStatusLog = null;
 let accumulatedResponseText = '';
 
 // DOM Elements
-const chatMessages = document.getElementById('chat-messages');
-const chatForm = document.getElementById('chat-form');
-const userInput = document.getElementById('user-input');
-const btnSend = document.getElementById('btn-send');
-const btnClearChat = document.getElementById('btn-clear-chat');
-const welcomeMessage = document.getElementById('welcome-message');
-const sourcesContainer = document.getElementById('sources-container');
-const sourcesList = document.getElementById('sources-list');
-const sourceCount = document.getElementById('source-count');
-const btnToggleSources = document.getElementById('btn-toggle-sources');
+let chatMessages, chatForm, userInput, btnSend, btnClearChat, welcomeMessage;
+let sourcesContainer, sourcesList, sourceCount, btnToggleSources;
 
 // Mobile UI Elements
-const sidebar = document.querySelector('.sidebar');
-const sidebarOverlay = document.getElementById('sidebar-overlay');
-const btnMenuToggle = document.getElementById('btn-menu-toggle');
-const btnSidebarClose = document.getElementById('btn-sidebar-close');
+let sidebar, sidebarOverlay, btnMenuToggle, btnSidebarClose;
 
 // Status indicators
-const indicatorApi = document.querySelector('#status-api .status-indicator');
-const labelApi = document.querySelector('#status-api .status-label');
-const indicatorNeo4j = document.querySelector('#status-neo4j .status-indicator');
-const labelNeo4j = document.querySelector('#status-neo4j .status-label');
-const activeModelLabel = document.getElementById('active-model');
+let indicatorApi, labelApi, indicatorNeo4j, labelNeo4j, activeModelLabel;
 
 // Set Markdown configuration (disable mangling/header IDs to prevent errors in newer versions)
 if (window.marked) {
@@ -56,6 +41,33 @@ if (window.marked) {
 // Initialize App
 // -------------------------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
+    // Resolve DOM Elements
+    chatMessages = document.getElementById('chat-messages');
+    chatForm = document.getElementById('chat-form');
+    userInput = document.getElementById('user-input');
+    btnSend = document.getElementById('btn-send');
+    btnClearChat = document.getElementById('btn-clear-chat');
+    welcomeMessage = document.getElementById('welcome-message');
+    sourcesContainer = document.getElementById('sources-container');
+    sourcesList = document.getElementById('sources-list');
+    sourceCount = document.getElementById('source-count');
+    btnToggleSources = document.getElementById('btn-toggle-sources');
+
+    // Resolve Mobile UI Elements
+    sidebar = document.querySelector('.sidebar');
+    sidebarOverlay = document.getElementById('sidebar-overlay');
+    btnMenuToggle = document.getElementById('btn-menu-toggle');
+    btnSidebarClose = document.getElementById('btn-sidebar-close');
+
+    // Resolve Status indicators
+    indicatorApi = document.querySelector('#status-api .status-indicator');
+    labelApi = document.querySelector('#status-api .status-label');
+    indicatorNeo4j = document.querySelector('#status-neo4j .status-indicator');
+    labelNeo4j = document.querySelector('#status-neo4j .status-label');
+    activeModelLabel = document.getElementById('active-model');
+
+    console.log('[App] Resolving DOM elements...');
+
     loadChatHistory();
     checkSystemStatus();
     connectWebSocket();
@@ -64,18 +76,21 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(checkSystemStatus, 5000);
     
     // Auto-grow input textarea
-    userInput.addEventListener('input', autoGrowInput);
-    
-    // Handle Enter to send
-    userInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            chatForm.dispatchEvent(new Event('submit'));
-        }
-    });
+    if (userInput) {
+        userInput.addEventListener('input', autoGrowInput);
+        
+        // Handle Enter to send
+        userInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                chatForm.dispatchEvent(new Event('submit'));
+            }
+        });
+    }
 
     // Mobile Sidebar helper functions
     const closeSidebar = () => {
+        console.log('[Sidebar] Closing sidebar...');
         if (sidebar && sidebarOverlay) {
             sidebar.classList.remove('active');
             sidebarOverlay.classList.remove('active');
@@ -85,6 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Mobile Sidebar Event Listeners
     if (btnMenuToggle && sidebar && sidebarOverlay) {
         btnMenuToggle.addEventListener('click', () => {
+            console.log('[Sidebar] Opening sidebar...');
             sidebar.classList.add('active');
             sidebarOverlay.classList.add('active');
         });
@@ -114,16 +130,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Toggle sources drawer
-    btnToggleSources.addEventListener('click', () => {
-        const isCollapsed = sourcesList.style.display === 'none';
-        sourcesList.style.display = isCollapsed ? 'grid' : 'none';
-        btnToggleSources.querySelector('i').className = isCollapsed 
-            ? 'fa-solid fa-chevron-down' 
-            : 'fa-solid fa-chevron-up';
-    });
+    if (btnToggleSources) {
+        btnToggleSources.addEventListener('click', () => {
+            const isCollapsed = sourcesList.style.display === 'none';
+            sourcesList.style.display = isCollapsed ? 'grid' : 'none';
+            btnToggleSources.querySelector('i').className = isCollapsed 
+                ? 'fa-solid fa-chevron-down' 
+                : 'fa-solid fa-chevron-up';
+        });
+    }
 
     // Clear conversation
-    btnClearChat.addEventListener('click', clearConversation);
+    if (btnClearChat) {
+        btnClearChat.addEventListener('click', clearConversation);
+    }
 
     // Initialize Liquid Background Animation
     initLiquidBg();
