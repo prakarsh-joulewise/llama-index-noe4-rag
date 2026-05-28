@@ -373,6 +373,7 @@ h1, h2, h3, h4, .brand-name {
     display: flex;
     gap: 16px;
     max-width: 85%;
+    min-width: 0;
     animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -414,6 +415,9 @@ h1, h2, h3, h4, .brand-name {
     border-radius: 16px;
     font-size: 0.92rem;
     line-height: 1.6;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    min-width: 0;
 }
 
 .user .bubble {
@@ -466,12 +470,14 @@ h1, h2, h3, h4, .brand-name {
 
 /* Markdown Table Styling (Crucial for RAG outputs) */
 .bubble table {
+    display: block;
     width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     border-collapse: collapse;
     margin: 16px 0;
     font-size: 0.85rem;
     border-radius: 8px;
-    overflow: hidden;
     border: 1px solid var(--border-color);
 }
 
@@ -506,6 +512,23 @@ h1, h2, h3, h4, .brand-name {
     font-family: monospace;
     font-size: 0.85rem;
     color: var(--accent);
+}
+
+.bubble pre {
+    background: rgba(0, 0, 0, 0.25);
+    padding: 12px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 12px 0;
+    border: 1px solid var(--border-color);
+}
+
+.bubble pre code {
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
+    white-space: pre;
+    color: var(--text-main);
 }
 
 .bubble p {
