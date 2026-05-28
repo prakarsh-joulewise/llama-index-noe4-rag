@@ -31,6 +31,12 @@ const sourcesList = document.getElementById('sources-list');
 const sourceCount = document.getElementById('source-count');
 const btnToggleSources = document.getElementById('btn-toggle-sources');
 
+// Mobile UI Elements
+const sidebar = document.querySelector('.sidebar');
+const sidebarOverlay = document.getElementById('sidebar-overlay');
+const btnMenuToggle = document.getElementById('btn-menu-toggle');
+const btnSidebarClose = document.getElementById('btn-sidebar-close');
+
 // Status indicators
 const indicatorApi = document.querySelector('#status-api .status-indicator');
 const labelApi = document.querySelector('#status-api .status-label');
@@ -68,6 +74,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Mobile Sidebar helper functions
+    const closeSidebar = () => {
+        if (sidebar && sidebarOverlay) {
+            sidebar.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+        }
+    };
+
+    // Mobile Sidebar Event Listeners
+    if (btnMenuToggle && sidebar && sidebarOverlay) {
+        btnMenuToggle.addEventListener('click', () => {
+            sidebar.classList.add('active');
+            sidebarOverlay.classList.add('active');
+        });
+    }
+
+    if (btnSidebarClose) {
+        btnSidebarClose.addEventListener('click', closeSidebar);
+    }
+
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', closeSidebar);
+    }
+
     // Handle suggestion clicks
     document.addEventListener('click', (e) => {
         const card = e.target.closest('.suggestion-card, .suggest-btn');
@@ -75,6 +105,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const query = card.getAttribute('data-query');
             if (query) {
                 sendQuery(query);
+                // Close sidebar on mobile after choosing a suggestion
+                if (window.innerWidth <= 768) {
+                    closeSidebar();
+                }
             }
         }
     });
@@ -90,6 +124,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Clear conversation
     btnClearChat.addEventListener('click', clearConversation);
+
+    // Initialize Liquid Background Animation
+    initLiquidBg();
 });
 
 // -------------------------------------------------------------
@@ -132,25 +169,31 @@ function connectWebSocket() {
     if (ws && ws.readyState === WebSocket.OPEN) return;
 
     console.log(`[WebSocket] Connecting to: ${WS_CHAT_URL}`);
-    ws = new WebSocket(WS_CHAT_URL);
+    try {
+        ws = new WebSocket(WS_CHAT_URL);
 
-    ws.onopen = () => {
-        console.log('[WebSocket] Connection established.');
-    };
+        ws.onopen = () => {
+            console.log('[WebSocket] Connection established.');
+        };
 
-    ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        handleServerMessage(data);
-    };
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            handleServerMessage(data);
+        };
 
-    ws.onerror = (error) => {
-        console.error('[WebSocket] Error:', error);
-    };
+        ws.onerror = (error) => {
+            console.error('[WebSocket] Error:', error);
+        };
 
-    ws.onclose = (event) => {
-        console.log('[WebSocket] Connection closed. Reconnecting in 3s...', event.reason);
-        setTimeout(connectWebSocket, 3000);
-    };
+        ws.onclose = (event) => {
+            console.log('[WebSocket] Connection closed. Reconnecting in 3s...', event.reason);
+            setTimeout(connectWebSocket, 3000);
+        };
+    } catch (error) {
+        console.warn('[WebSocket] Connection failed to initialize (Backend might be offline):', error);
+        // Retry connection in 5 seconds
+        setTimeout(connectWebSocket, 5000);
+    }
 }
 
 // -------------------------------------------------------------
@@ -412,4 +455,118 @@ function scrollToBottom() {
 function autoGrowInput() {
     userInput.style.height = 'auto';
     userInput.style.height = userInput.scrollHeight + 'px';
+}
+
+// -------------------------------------------------------------
+// Liquid Background Canvas Animation
+// -------------------------------------------------------------
+class LiquidBlob {
+    constructor(width, height, color) {
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        // Slow shifting velocities
+        this.vx = (Math.random() - 0.5) * 0.6;
+        this.vy = (Math.random() - 0.5) * 0.6;
+        this.radius = Math.random() * 150 + 150; // large soft blobs
+        this.color = color;
+    }
+
+    update(width, height) {
+        this.x += this.vx;
+        this.y += this.vy;
+
+        // Bounce boundaries and correct position to avoid getting stuck
+        if (this.x < 0) {
+            this.x = 0;
+            this.vx = Math.abs(this.vx);
+        } else if (this.x > width) {
+            this.x = width;
+            this.vx = -Math.abs(this.vx);
+        }
+
+        if (this.y < 0) {
+            this.y = 0;
+            this.vy = Math.abs(this.vy);
+        } else if (this.y > height) {
+            this.y = height;
+            this.vy = -Math.abs(this.vy);
+        }
+    }
+
+    draw(ctx) {
+        ctx.beginPath();
+        const grad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
+        grad.addColorStop(0, this.color);
+        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = grad;
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+function initLiquidBg() {
+    console.log('[LiquidBG] Initializing liquid background...');
+    const canvas = document.getElementById('liquid-bg-canvas');
+    if (!canvas) {
+        console.warn('[LiquidBG] Canvas element not found!');
+        return;
+    }
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+        console.warn('[LiquidBG] Could not retrieve 2D context from canvas!');
+        return;
+    }
+
+    // Run canvas at a lower internal resolution for rendering performance (stretched by CSS + blur filter)
+    const scaleFactor = 0.5;
+    
+    // Safely get width and height with window fallbacks
+    let offsetW = canvas.offsetWidth;
+    let offsetH = canvas.offsetHeight;
+    if (!offsetW || offsetW === 0) offsetW = window.innerWidth || 1024;
+    if (!offsetH || offsetH === 0) offsetH = window.innerHeight || 768;
+    
+    let width = canvas.width = offsetW * scaleFactor;
+    let height = canvas.height = offsetH * scaleFactor;
+    console.log(`[LiquidBG] Canvas resolution set to ${width}x${height}`);
+
+    // Vibrant, higher-opacity colors for beautiful blending under the CSS blur filter
+    const colors = [
+        'rgba(99, 102, 241, 0.75)',  // --primary (Indigo)
+        'rgba(6, 182, 212, 0.7)',    // --accent (Cyan)
+        'rgba(139, 92, 246, 0.65)',  // Deep Violet
+        'rgba(30, 58, 138, 0.7)'     // Deep Blue
+    ];
+
+    const blobs = colors.map(c => new LiquidBlob(width, height, c));
+
+    function resize() {
+        if (!canvas) return;
+        let w = canvas.offsetWidth;
+        let h = canvas.offsetHeight;
+        if (!w || w === 0) w = window.innerWidth || 1024;
+        if (!h || h === 0) h = window.innerHeight || 768;
+        width = canvas.width = w * scaleFactor;
+        height = canvas.height = h * scaleFactor;
+    }
+
+    window.addEventListener('resize', resize);
+
+    function animate() {
+        if (!canvas) return;
+        ctx.clearRect(0, 0, width, height);
+        
+        // Use default source-over compositing, which works reliably on transparent backgrounds
+        ctx.globalCompositeOperation = 'source-over';
+
+        blobs.forEach(blob => {
+            blob.update(width, height);
+            blob.draw(ctx);
+        });
+
+        requestAnimationFrame(animate);
+    }
+
+    animate();
+    console.log('[LiquidBG] Animation loop running.');
 }

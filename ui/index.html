@@ -22,6 +22,9 @@
                     <span class="brand-icon"><i class="fa-solid fa-bolt-lightning"></i></span>
                     <span class="brand-name">Joulewise<span>RAG</span></span>
                 </div>
+                <button class="sidebar-close-btn" id="btn-sidebar-close" aria-label="Close Sidebar">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
 
             <div class="sidebar-section">
@@ -71,7 +74,13 @@
 
         <!-- Main Chat Area -->
         <main class="chat-area">
+            <!-- Liquid Animation Canvas Background -->
+            <canvas class="liquid-bg" id="liquid-bg-canvas"></canvas>
+
             <header class="chat-header">
+                <button class="menu-toggle-btn" id="btn-menu-toggle" aria-label="Toggle Sidebar">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
                 <div class="chat-title-info">
                     <h2>Regulatory RAG Agent</h2>
                     <p>Ask natural questions about tariff orders, wheeling, and transmission charges</p>
@@ -128,6 +137,9 @@
                 </form>
             </footer>
         </main>
+        
+        <!-- Sidebar Overlay Backdrop for Mobile -->
+        <div class="sidebar-overlay" id="sidebar-overlay"></div>
     </div>
 
     <!-- Marked.js Markdown Parser via CDN -->

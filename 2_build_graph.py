@@ -137,6 +137,7 @@ def build_knowledge_graph():
             chunk["document_name"] = filename
             chunk["doc_id"] = doc_id
             chunk["chunk_id"] = str(uuid.uuid4())
+            chunk["chunk_index"] = idx
             all_chunks.append(chunk)
             
     if not all_chunks:
@@ -163,7 +164,7 @@ def build_knowledge_graph():
     with driver.session() as session:
         for i, chunk in enumerate(all_chunks):
             session.run("""
-                CREATE (c:Chunk {
+                 CREATE (c:Chunk {
                     id: $id,
                     text: $text,
                     chunk_type: $chunk_type,
@@ -172,6 +173,7 @@ def build_knowledge_graph():
                     year: $year,
                     document_name: $document_name,
                     doc_id: $doc_id,
+                    chunk_index: $chunk_index,
                     embedding: $embedding
                 })
             """, {
@@ -183,6 +185,7 @@ def build_knowledge_graph():
                 "year": chunk["year"],
                 "document_name": chunk["document_name"],
                 "doc_id": chunk["doc_id"],
+                "chunk_index": chunk["chunk_index"],
                 "embedding": all_embeddings[i]
             })
             
@@ -208,6 +211,15 @@ def build_knowledge_graph():
         session.run("""
             MATCH (c:Chunk), (d:Document {name: c.document_name})
             MERGE (d)-[:HAS_CHUNK]->(c)
+        """)
+        
+        # Link sequential chunks within the same document
+        print("  - Linking sequential chunks...")
+        session.run("""
+            MATCH (d:Document)-[:HAS_CHUNK]->(c1:Chunk)
+            MATCH (d)-[:HAS_CHUNK]->(c2:Chunk)
+            WHERE c1.chunk_index + 1 = c2.chunk_index
+            MERGE (c1)-[:NEXT]->(c2)
         """)
         
         # State nodes

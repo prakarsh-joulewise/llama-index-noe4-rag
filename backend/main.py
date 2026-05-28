@@ -16,6 +16,7 @@ from config import setup_global_settings, get_neo4j_driver
 from llama_index.core import Settings, PromptTemplate
 from llama_index.core.query_engine import RetrieverQueryEngine
 from llama_index.core.response_synthesizers import get_response_synthesizer
+from llama_index.core.postprocessor.types import BaseNodePostprocessor
 
 # Load environment variables
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"))
@@ -98,6 +99,86 @@ else:
         llm=llm
     )
 
+class AdjacentContextExpander(BaseNodePostprocessor):
+    """Postprocessor that fetches preceding and succeeding context chunks for text nodes
+    from Neo4j, and prepends/appends them to expand the LLM's local context window.
+    """
+    def __init__(self, driver):
+        super().__init__()
+        self._driver = driver
+        
+    def _strip_raw_prefix(self, text):
+        if not text:
+            return ""
+        # The raw text in Neo4j starts with a header prefix followed by '\n\n'
+        parts = text.split("\n\n", 1)
+        if len(parts) >= 2:
+            return parts[1].strip()
+        return text.strip()
+        
+    def _get_adjacent_context(self, node_id):
+        with self._driver.session() as session:
+            # 1. Try using the [:NEXT] relationships (optimal)
+            result = session.run("""
+                MATCH (c:Chunk {id: $id})
+                OPTIONAL MATCH (prev:Chunk)-[:NEXT]->(c)
+                OPTIONAL MATCH (c)-[:NEXT]->(next:Chunk)
+                RETURN prev.text as prev_text, next.text as next_text
+            """, {"id": node_id}).single()
+            
+            if result and (result["prev_text"] is not None or result["next_text"] is not None):
+                return result["prev_text"], result["next_text"]
+                
+            # 2. Fallback to chunk_index if NEXT relationships do not exist yet
+            result_fallback = session.run("""
+                MATCH (c:Chunk {id: $id})
+                WHERE c.chunk_index IS NOT NULL AND c.doc_id IS NOT NULL
+                OPTIONAL MATCH (prev:Chunk {doc_id: c.doc_id, chunk_index: c.chunk_index - 1})
+                OPTIONAL MATCH (next:Chunk {doc_id: c.doc_id, chunk_index: c.chunk_index + 1})
+                RETURN prev.text as prev_text, next.text as next_text
+            """, {"id": node_id}).single()
+            
+            if result_fallback:
+                return result_fallback["prev_text"], result_fallback["next_text"]
+                
+        return None, None
+
+    def _postprocess_nodes(self, nodes, query_bundle=None):
+        print("\n  [AdjacentContext] Expanding local context for text nodes...")
+        expanded_count = 0
+        for nws in nodes:
+            node = nws.node
+            chunk_type = node.metadata.get("chunk_type")
+            
+            # Only expand text chunks (not tables)
+            if chunk_type == "text":
+                node_id = node.node_id
+                prev_text, next_text = self._get_adjacent_context(node_id)
+                
+                prev_body = self._strip_raw_prefix(prev_text)
+                next_body = self._strip_raw_prefix(next_text)
+                
+                if prev_body or next_body:
+                    clean_text = node.get_content()
+                    parts = clean_text.split("-----------------------------------------\n", 1)
+                    if len(parts) >= 2:
+                        header = parts[0] + "-----------------------------------------\n"
+                        current_body = parts[1].strip()
+                        
+                        merged_body = ""
+                        if prev_body:
+                            merged_body += f"... [Preceding Context] ...\n{prev_body}\n\n"
+                        merged_body += current_body
+                        if next_body:
+                            merged_body += f"\n\n{next_body}\n... [Succeeding Context] ..."
+                            
+                        node.set_content(header + merged_body)
+                        expanded_count += 1
+                        
+        print(f"  [AdjacentContext] Successfully expanded context for {expanded_count} text node(s).")
+        return nodes
+
+
 # Build query engine with streaming enabled
 qa_tmpl = PromptTemplate(qa_prompt_tmpl)
 response_synthesizer = get_response_synthesizer(
@@ -110,7 +191,7 @@ response_synthesizer = get_response_synthesizer(
 query_engine = RetrieverQueryEngine(
     retriever=retriever,
     response_synthesizer=response_synthesizer,
-    node_postprocessors=[reranker]
+    node_postprocessors=[reranker, AdjacentContextExpander(driver)]
 )
 
 
