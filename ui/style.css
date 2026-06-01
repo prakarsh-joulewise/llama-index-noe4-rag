@@ -264,6 +264,8 @@ h1, h2, h3, h4, .brand-name {
     height: 100%;
     background: transparent;
     position: relative;
+    width: 100%;
+    min-width: 0;
 }
 
 .chat-header {
@@ -292,12 +294,15 @@ h1, h2, h3, h4, .brand-name {
 .chat-feed {
     flex: 1;
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 32px;
     display: flex;
     flex-direction: column;
     gap: 24px;
     position: relative;
     z-index: 1;
+    width: 100%;
+    min-width: 0;
 }
 
 /* Welcome Card styling */
