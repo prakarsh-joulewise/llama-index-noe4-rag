@@ -85,8 +85,8 @@ top_n = int(os.getenv("RERANKER_TOP_N", "8"))
 retriever = HybridNeo4jRetriever(
     driver=driver,
     embed_model=embed_model,
-    vector_top_k=50 if reranker_type == "smart-table" else 20,
-    fulltext_top_k=50 if reranker_type == "smart-table" else 20,
+    vector_top_k=40 if reranker_type == "smart-table" else 20,
+    fulltext_top_k=40 if reranker_type == "smart-table" else 20,
     rrf_k=60
 )
 
@@ -101,7 +101,7 @@ else:
 
 class AdjacentContextExpander(BaseNodePostprocessor):
     """Postprocessor that fetches preceding and succeeding context chunks for text nodes
-    from Neo4j, and prepends/appends them to expand the LLM's local context window.
+    from Neo4j in a single batched query, and prepends/appends them to expand the LLM's local context window.
     """
     def __init__(self, driver):
         super().__init__()
@@ -116,44 +116,67 @@ class AdjacentContextExpander(BaseNodePostprocessor):
             return parts[1].strip()
         return text.strip()
         
-    def _get_adjacent_context(self, node_id):
+    def _get_adjacent_contexts_batched(self, node_ids):
+        if not node_ids:
+            return {}
+        
+        results = {}
         with self._driver.session() as session:
             # 1. Try using the [:NEXT] relationships (optimal)
-            result = session.run("""
-                MATCH (c:Chunk {id: $id})
+            records = session.run("""
+                MATCH (c:Chunk)
+                WHERE c.id IN $ids
                 OPTIONAL MATCH (prev:Chunk)-[:NEXT]->(c)
                 OPTIONAL MATCH (c)-[:NEXT]->(next:Chunk)
-                RETURN prev.text as prev_text, next.text as next_text
-            """, {"id": node_id}).single()
+                RETURN c.id as id, prev.text as prev_text, next.text as next_text
+            """, {"ids": node_ids})
             
-            if result and (result["prev_text"] is not None or result["next_text"] is not None):
-                return result["prev_text"], result["next_text"]
-                
-            # 2. Fallback to chunk_index if NEXT relationships do not exist yet
-            result_fallback = session.run("""
-                MATCH (c:Chunk {id: $id})
-                WHERE c.chunk_index IS NOT NULL AND c.doc_id IS NOT NULL
-                OPTIONAL MATCH (prev:Chunk {doc_id: c.doc_id, chunk_index: c.chunk_index - 1})
-                OPTIONAL MATCH (next:Chunk {doc_id: c.doc_id, chunk_index: c.chunk_index + 1})
-                RETURN prev.text as prev_text, next.text as next_text
-            """, {"id": node_id}).single()
+            for record in records:
+                nid = record["id"]
+                prev_text = record["prev_text"]
+                next_text = record["next_text"]
+                if prev_text is not None or next_text is not None:
+                    results[nid] = (prev_text, next_text)
             
-            if result_fallback:
-                return result_fallback["prev_text"], result_fallback["next_text"]
+            # 2. Fallback to chunk_index/doc_id for any IDs that did not return any context
+            missing_ids = [nid for nid in node_ids if nid not in results]
+            if missing_ids:
+                records_fallback = session.run("""
+                    MATCH (c:Chunk)
+                    WHERE c.id IN $ids AND c.chunk_index IS NOT NULL AND c.doc_id IS NOT NULL
+                    OPTIONAL MATCH (prev:Chunk {doc_id: c.doc_id, chunk_index: c.chunk_index - 1})
+                    OPTIONAL MATCH (next:Chunk {doc_id: c.doc_id, chunk_index: c.chunk_index + 1})
+                    RETURN c.id as id, prev.text as prev_text, next.text as next_text
+                """, {"ids": missing_ids})
                 
-        return None, None
+                for record in records_fallback:
+                    nid = record["id"]
+                    prev_text = record["prev_text"]
+                    next_text = record["next_text"]
+                    if prev_text is not None or next_text is not None:
+                        results[nid] = (prev_text, next_text)
+                        
+        return results
 
     def _postprocess_nodes(self, nodes, query_bundle=None):
         print("\n  [AdjacentContext] Expanding local context for text nodes...")
-        expanded_count = 0
+        
+        # 1. Collect all node IDs for text chunks
+        text_node_map = {}
         for nws in nodes:
             node = nws.node
             chunk_type = node.metadata.get("chunk_type")
-            
-            # Only expand text chunks (not tables)
             if chunk_type == "text":
-                node_id = node.node_id
-                prev_text, next_text = self._get_adjacent_context(node_id)
+                text_node_map[node.node_id] = node
+                
+        # 2. Retrieve all adjacent contexts in a batched call
+        adjacent_contexts = self._get_adjacent_contexts_batched(list(text_node_map.keys()))
+        
+        # 3. Apply expansions
+        expanded_count = 0
+        for node_id, node in text_node_map.items():
+            if node_id in adjacent_contexts:
+                prev_text, next_text = adjacent_contexts[node_id]
                 
                 prev_body = self._strip_raw_prefix(prev_text)
                 next_body = self._strip_raw_prefix(next_text)

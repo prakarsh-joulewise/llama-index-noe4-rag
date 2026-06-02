@@ -18,14 +18,19 @@ def get_llm():
     )
     return llm
 
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+
 def setup_global_settings():
     """Configures global settings for LlamaIndex."""
     llm = get_llm()
     Settings.llm = llm
-    # We can also configure a local embedding model if needed
-    Settings.embed_model = "local:BAAI/bge-small-en-v1.5"
     
-    # We'll stick to basic settings for now
+    # Configure local embedding model strictly on CUDA
+    Settings.embed_model = HuggingFaceEmbedding(
+        model_name="BAAI/bge-small-en-v1.5",
+        device="cuda"
+    )
+    
     return llm
 
 def get_neo4j_driver():

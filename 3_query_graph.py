@@ -244,11 +244,12 @@ class SmartTableBoostReranker(BaseNodePostprocessor):
     """Custom postprocessor that reranks chunks using a cross-encoder, 
     boosts table chunks matching query topics (with specific/generic split), and deduplicates identical bodies.
     """
-    def __init__(self, top_n=5):
+    def __init__(self, top_n=8):
         super().__init__()
         self._internal = SentenceTransformerRerank(
             model="BAAI/bge-reranker-base",
-            top_n=100  # get all scores first
+            top_n=100,  # get all scores first
+            device="cuda"
         )
         self._top_n = top_n
         
@@ -407,7 +408,8 @@ class DebugReranker(BaseNodePostprocessor):
         elif self._reranker_type == "sentence-transformer":
             self._internal = SentenceTransformerRerank(
                 model="BAAI/bge-reranker-base",
-                top_n=top_n
+                top_n=top_n,
+                device="cuda"
             )
         else:
             self._internal = None
@@ -466,8 +468,8 @@ def query_knowledge_graph():
     retriever = HybridNeo4jRetriever(
         driver=driver,
         embed_model=embed_model,
-        vector_top_k=50 if reranker_type == "smart-table" else 20,
-        fulltext_top_k=50 if reranker_type == "smart-table" else 20,
+        vector_top_k=40 if reranker_type == "smart-table" else 20,
+        fulltext_top_k=40 if reranker_type == "smart-table" else 20,
         rrf_k=60
     )
     
