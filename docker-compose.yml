@@ -12,7 +12,7 @@ services:
       - "host.docker.internal:host-gateway"
     environment:
       # You can override .env variables here if needed
-      - NEO4J_URI=${NEO4J_URI:-bolt://host.docker.internal:7687}
+      - NEO4J_URI=bolt://host.docker.internal:7687
     deploy:
       resources:
         reservations:
